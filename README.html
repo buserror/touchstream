@@ -1,0 +1,58 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="Content-Type">
+  <title>touchstream</title>
+</head>
+<body>
+<h3>Introduction</h3>
+<span style="font-style: italic;">touchstream</span> is a program that
+allows you to share a keyboard &amp;
+mouse over a number of machines, on a LAN, typicaly.<br>
+Imagine having a mac and a linux machine, with their own screens; you
+can use the Mac mouse and keyboard on the linux box too by moving the
+mouse pointer to a max screen edge, and it starts moving on the linux
+screen.<br>
+Also, the clipboard is exchanged as you switch back &amp; forth.<br>
+<br>
+<h3>Rationale</h3>
+The goal of <span style="font-style: italic;">touchstream</span> was
+to replace <span style="font-style: italic;">synergy</span> -- at
+least on my desk. <span style="font-style: italic;">Synergy</span> has
+various
+issues, notably on the bloat department; "powertop" flags it as one of
+the most used/busy process on the machine, even tho it technicaly
+hasn't a
+lot to do, furthermore the codebase is bloated too, and the
+implementation uses countless locks, mutexes and other distasteful
+things that adds a lot of overhead, and that one doesn't strictly need
+if designing the execution path properly.<br>
+The other reason is that <span style="font-style: italic;">synergy</span>
+stopped working on my configuration recently for
+me, and I realised about it's code bloat when I went to try to fix it. <br>
+<br>
+Obviously, quite a bit of the platform specific bits of <span
+ style="font-style: italic;">touchstream</span> are copied straight out
+of <span style="font-style: italic;">synergy's</span> source code, and
+not only deserve the credit, but also share their GPL licence. In many
+cases, the code has been entirely reworked tho, and I haven't taken
+care of copying the attribution and copyrights for individual snipets.<br>
+The actualy "core" of touchstream is entirely original, and thats why
+the files uses my generic GPL header bits.<br>
+<h3>Status</h3>
+Anyway, <span style="font-style: italic;">touchstream</span> is C99,
+doesn't use a single mutex, and works for
+now on OSX as a server (read, the screen that has the keyboard and
+mouse) and as a client of a
+recent xorg.<br>
+It also can work without a "client" process by talking directly to
+remote xorg servers, as long as 1) the server allows tcp connections,
+and 2) you have disabled access control (xhost +)<br>
+Clearly it lacks a lot of the feature <span style="font-style: italic;">synergy</span>
+has (windows support, non-latin keyboard support etc) but it also a LOT
+simpler, and uses a fraction of the resources.<br>
+<br>
+<br>
+</body>
+</html>
