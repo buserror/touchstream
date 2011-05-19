@@ -52,7 +52,14 @@ typedef struct ts_xorg_client_t {
 
 	ts_remote_t remote;
 	ts_xorg_krev_t map;
+
+	ts_display_p clipboard_destination;
 } ts_xorg_client_t, *ts_xorg_client_p;
+
+static void
+ts_xorg_client_driver_getclipboard_complete(
+		struct ts_display_t *display,
+		struct ts_display_t *to);
 
 #define ERR_BUF_SIZE 1024
 int
@@ -120,69 +127,82 @@ xorg_client_eventloop(
 
 	while (XPending(d->dp)) {
 		XNextEvent(d->dp, &e);
-		if (e.type == SelectionRequest) {
-			V2("%s SelectionRequest out window is %x\n",__func__, (int)d->window);
-			V3("Requester=%x selection=%d target=%d property=%d\n",
-					(int)e.xselectionrequest.requestor,
-					(int)e.xselectionrequest.selection,
-					(int)e.xselectionrequest.target,
-					(int)e.xselectionrequest.property);
+		switch (e.type) {
+			case SelectionRequest: {
 
-			V3("target=%s\n",
-					XGetAtomName(d->dp,e.xselectionrequest.target));
-			V3("property=%s\n",
-			        XGetAtomName(d->dp,
-			                e.xselectionrequest.property));
+				V2("%s SelectionRequest out window is %x\n",__func__, (int)d->window);
+				V3("Requester=%x selection=%d target=%d property=%d\n",
+						(int)e.xselectionrequest.requestor,
+						(int)e.xselectionrequest.selection,
+						(int)e.xselectionrequest.target,
+						(int)e.xselectionrequest.property);
 
-			int result;
-			if (e.xselectionrequest.requestor != d->window) {
+				V3("target=%s\n",
+						XGetAtomName(d->dp,e.xselectionrequest.target));
+				V3("property=%s\n",
+						XGetAtomName(d->dp,
+								e.xselectionrequest.property));
 
-				Atom type;
-			//	XSelectInput(dpy, w, StructureNotifyMask+ExposureMask);
-				int format;
-				unsigned long len, bytes_left;
-				unsigned char *data = NULL;
+				int result;
+				if (e.xselectionrequest.requestor != d->window) {
 
-				result = XGetWindowProperty(d->dp, d->window,
-						XA_PRIMARY, 0, 10000000L, 0,
-						XA_STRING, &type, &format, &len, &bytes_left, &data);
-				V3("twin primary type=%d format=%d len=%d data=%p\n",
-						(int) type, format, (int) len, data);
-				if (result == Success) {
-					//Try to change the property
-					//Put the XA_PRIMARY string into the requested property of
-					//requesting window
+					Atom type;
+				//	XSelectInput(dpy, w, StructureNotifyMask+ExposureMask);
+					int format;
+					unsigned long len, bytes_left;
+					unsigned char *data = NULL;
 
-					result = XChangeProperty(d->dp, e.xselectionrequest.requestor,
-							e.xselectionrequest.property, e.xselectionrequest.target,
-							8, PropModeReplace, (unsigned char *) data, len);
-					if (result == BadAlloc || result == BadAtom || result == BadMatch
-							|| result == BadValue || result == BadWindow) {
-						fprintf(stderr, "XChangeProperty failed %d\n", result);
+					result = XGetWindowProperty(d->dp, d->window,
+							XA_PRIMARY, 0, 10000000L, 0,
+							XA_STRING, &type, &format, &len, &bytes_left, &data);
+					V3("twin primary type=%d format=%d len=%d data=%p\n",
+							(int) type, format, (int) len, data);
+					if (result == Success) {
+						//Try to change the property
+						//Put the XA_PRIMARY string into the requested property of
+						//requesting window
+
+						result = XChangeProperty(d->dp, e.xselectionrequest.requestor,
+								e.xselectionrequest.property, e.xselectionrequest.target,
+								8, PropModeReplace, (unsigned char *) data, len);
+						if (result == BadAlloc || result == BadAtom || result == BadMatch
+								|| result == BadValue || result == BadWindow) {
+							fprintf(stderr, "XChangeProperty failed %d\n", result);
+						}
 					}
 				}
-			}
-				//free(test);
+					//free(test);
 
-			XSelectionEvent xev;
-			//make SelectionNotify event
-			xev.type = SelectionNotify;
-			xev.send_event = True;
-			xev.display = d->dp;
-			xev.requestor = e.xselectionrequest.requestor;
-			xev.selection = e.xselectionrequest.selection;
-			xev.target = e.xselectionrequest.target;
-			xev.property = e.xselectionrequest.property;
-			xev.time = e.xselectionrequest.time;
+				XSelectionEvent xev;
+				//make SelectionNotify event
+				xev.type = SelectionNotify;
+				xev.send_event = True;
+				xev.display = d->dp;
+				xev.requestor = e.xselectionrequest.requestor;
+				xev.selection = e.xselectionrequest.selection;
+				xev.target = e.xselectionrequest.target;
+				xev.property = e.xselectionrequest.property;
+				xev.time = e.xselectionrequest.time;
 
-			//Send message to requesting window that operation is done
-			result = XSendEvent(d->dp, xev.requestor, 0, 0L,
-					(XEvent *) &xev);
-			if (result == BadValue || result == BadWindow)
-				fprintf(stderr, "send SelectionRequest failed\n");
+				//Send message to requesting window that operation is done
+				result = XSendEvent(d->dp, xev.requestor, 0, 0L,
+						(XEvent *) &xev);
+				if (result == BadValue || result == BadWindow)
+					fprintf(stderr, "send SelectionRequest failed\n");
 
-		} else {
-			V2("%s unknown event %d\n", __func__, e.type);
+			}	break;
+			case SelectionNotify: {
+				V2("%s SelectionNotify %d\n", __func__,
+						(int)XGetSelectionOwner (d->dp, XA_PRIMARY) );
+
+				if (d->clipboard_destination)
+					ts_xorg_client_driver_getclipboard_complete(
+							&d->display,
+							d->clipboard_destination);
+			}	break;
+			default:
+				V2("%s unknown event %d\n", __func__, e.type);
+				break;
 		}
 	}
 
@@ -231,6 +251,13 @@ ts_xorg_client_driver_init(
 							CWOverrideRedirect | CWCursor,
 							&attr);
 
+	// select window for property changes
+	{
+		XWindowAttributes attr;
+		XGetWindowAttributes(d->dp, d->window, &attr);
+		XSelectInput(d->dp, d->window,
+				attr.your_event_mask | StructureNotifyMask | PropertyChangeMask);
+	}
 	CARD16 level;
 	BOOL state;
 	DPMSInfo(d->dp, &level, &state);
@@ -329,23 +356,15 @@ ts_xorg_client_driver_getclipboard(
 
 	V3("%s\n", __func__);
 	Display * dpy = d->dp;
-	// Copy from application
-//	Atom a1, a2;
-	Atom type;
-//	XSelectInput(dpy, w, StructureNotifyMask+ExposureMask);
-	int format, result;
-	unsigned long len, bytes_left;
-	unsigned char *data;
-	Window Sown;
 
 	ts_clipboard_clear(&display->clipboard);
 
-	XSelectInput(dpy, d->window, StructureNotifyMask+ExposureMask);
+	//XSelectInput(dpy, d->window, StructureNotifyMask | ExposureMask);
 
 	Atom tries[] = { XA_PRIMARY /*, XA_CLIPBOARD*/, 0 };
 
 	for (int i = 0; tries[i]; i++) {
-		Sown = XGetSelectionOwner (dpy, tries[i]);
+		Window Sown = XGetSelectionOwner (dpy, tries[i]);
 	//	printf ("Selection owner for try %d %i\n", i, (int)Sown);
 		if (Sown == None)
 			continue;
@@ -353,46 +372,69 @@ ts_xorg_client_driver_getclipboard(
 			V2("%s We already own the selection, bailing\n", __func__);
 			continue;
 		}
+		d->clipboard_destination = to;
 		XConvertSelection (dpy, tries[i], XA_STRING, XA_PRIMARY,
 				d->window, CurrentTime);
-		XSync (dpy, 0);
-		//
-		// Do not get any data, see how much data is there
-		//
-		XGetWindowProperty (dpy, d->window,
-				XA_PRIMARY, 0, 0,	  	  // offset - len
+		XFlush (dpy);
+		break;
+	}
+}
+
+static void
+ts_xorg_client_driver_getclipboard_complete(
+		struct ts_display_t *display,
+		struct ts_display_t *to)
+{
+	ts_xorg_client_p d = (ts_xorg_client_p)display;
+
+	V3("%s\n", __func__);
+	Display * dpy = d->dp;
+	// Copy from application
+//	Atom a1, a2;
+	Atom type;
+//	XSelectInput(dpy, w, StructureNotifyMask+ExposureMask);
+	int format, result;
+	unsigned long len, bytes_left;
+	unsigned char *data;
+
+	ts_clipboard_clear(&display->clipboard);
+
+	//
+	// Do not get any data, see how much data is there
+	//
+	XGetWindowProperty (dpy, d->window,
+			XA_PRIMARY, 0, 0,	  	  // offset - len
+			0, 	 	  // Delete 0==FALSE
+			XA_STRING,  // flag
+		&type,		  // return type
+		&format,	  // return format
+		&len, &bytes_left,  //that
+		&data);
+	V3("type:%i len:%i format:%i byte_left:%i\n",
+		(int)type, (int)len, (int)format, (int)bytes_left);
+	if (bytes_left > 0) {
+		unsigned long none;
+		result = XGetWindowProperty (dpy, d->window,
+				XA_PRIMARY, 0, bytes_left,	  	  // offset - len
 				0, 	 	  // Delete 0==FALSE
 				XA_STRING,  // flag
 			&type,		  // return type
 			&format,	  // return format
-			&len, &bytes_left,  //that
+			&len, &none,  //that
 			&data);
-//		printf ("type:%i len:%i format:%i byte_left:%i\n",
-//			(int)type, (int)len, (int)format, (int)bytes_left);
-		if (bytes_left > 0) {
-			unsigned long none;
-			result = XGetWindowProperty (dpy, d->window,
-					XA_PRIMARY, 0, bytes_left,	  	  // offset - len
-					0, 	 	  // Delete 0==FALSE
-					XA_STRING,  // flag
-				&type,		  // return type
-				&format,	  // return format
-				&len, &none,  //that
-				&data);
 
-			if (result == Success) {
-				V3 ("%s DATA %d!! '%s'\n", __func__, (int)bytes_left, data);
-				ts_clipboard_add(&display->clipboard, "text", bytes_left, (char*)data);
-				break;
-			}
-			XFree (data);
+		if (result == Success) {
+			V3 ("%s DATA %d!! '%s'\n", __func__, (int)bytes_left, data);
+			ts_clipboard_add(&display->clipboard, "text", bytes_left, (char*)data);
 		}
+		XFree (data);
 	}
 	if (display->clipboard.flavorCount)
 		ts_display_setclipboard(
 				to,
 				&display->clipboard);
 }
+
 
 static void
 ts_xorg_client_driver_setclipboard(
