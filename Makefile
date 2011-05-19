@@ -74,4 +74,4 @@ ${OBJ}/touchstream.bin : ${SHARED_OBJ}
 
 
 install: all
-	cp ${OBJ}/touchstream.bin $(DESTDIR)/bin/ 
+	cp ${OBJ}/touchstream.bin $(DESTDIR)/bin/touchstream 
