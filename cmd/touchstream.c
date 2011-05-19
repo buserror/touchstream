@@ -27,6 +27,8 @@
 #include <libgen.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 #include "ts_defines.h"
 #include "ts_mux.h"
@@ -77,6 +79,7 @@ main(
 		char * argv[])
 {
 	int server = 1;
+	int dae = 0;
 	char * client = NULL;
 	char * param = NULL;
 	char * xorg[8] = {0};
@@ -85,11 +88,14 @@ main(
 	for (int i = 1; i < argc; i++) {
 		if (!strcmp(argv[i], "-s")) {
 			server++;
+		} else if (!strcmp(argv[i], "-D")) {
+			dae++;
 		} else if (!strncmp(argv[i], "-v", 2)) {
 			if (isdigit(argv[i][2]))
-				verbose = isdigit(argv[i][2]) - '0';
+				verbose = argv[i][2] - '0';
 			else
 				verbose++;
+			V1("Set verbose to %d\n", verbose);
 		} else if (!strcmp(argv[i], "-x") && i < argc-1) {
 			if (!ts_xorg_create_client) {
 				fprintf(stderr, "%s: xorg client mode unsupported on this platform\n",
@@ -110,6 +116,34 @@ main(
 			}
 		}
 	}
+
+	if (dae) {
+		char *xa = getenv("XAUTHORITY");
+		V1("xa = %s\n", xa);
+		// daemon() somehow screws the clipboard at least on osx, so we use
+		// the roughly 'equivalent' code, enough to be detached from controling
+		// terminal etc. Also open a log in /tmp, if in verbose mode
+		//daemon(0, 0);
+		if (fork())
+			exit(0);
+		chdir("/tmp");
+		close(0);close(1);close(2);
+		if (verbose) {
+			int fd = open("/tmp/touchstream.log", O_WRONLY|O_CREAT, 0644);
+			dup2 (fd, 0);
+			dup2 (fd, 1);
+			dup2 (fd, 2);
+			if (fd > 2)
+				close(fd);
+			if (xa) {
+				char envv[256];
+				sprintf(envv, "XAUTHORITY=%s", xa);
+				putenv(envv);
+			}
+			system("pwd;env");
+		}
+	}
+
 	ts_master_init(master);
 
 	ts_platform_create_callback_p platform = NULL;
