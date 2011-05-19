@@ -265,9 +265,9 @@ connect_restart(
 }
 
 /*
- * This is called when the socket has been truely established.
+ * This is called when the socket has been truly established.
  * Theoricaly, we could use the existing system to buffer & send
- * our message, but since we /just started/ we can assume theres
+ * our message, but since we /just started/ we can assume there's
  * a few bytes free in the socket's buffer for a write() to work!
  */
 static int
@@ -277,7 +277,7 @@ connect_established(
 	V1("Outgoing connection established (%s)\n", __func__);
 	ts_display_p d = r->display;
 	char msg[32];
-	sprintf(msg, "Cvx%xw%dh%dn%s:p%s:\n", TS_MUX_VERSION,
+	sprintf(msg, "Cvx%xw%dh%dn%s:p%s:", TS_MUX_VERSION,
 			d->bounds.w, d->bounds.h, d->name,
 			d->param ? d->param : "");
 	write(r->socket, msg, strlen(msg)+1);
@@ -299,7 +299,7 @@ connect_can_read(
 }
 
 /*
- * Check to see wether we want to write anything. It could be
+ * Check to see whether we want to write anything. It could be
  * + That we are still establishing the connection, therefore we
  *   need to register for this event as per select() requirement
  * + We have an outgoing buffer that still has some data not sent
@@ -335,7 +335,7 @@ data_start(
 	V2("%s Incoming connection socket %d\n", __func__, r->socket);
 	ts_display_p d = ts_master_get_main(r->mux->master);
 	char msg[32];
-	sprintf(msg, "Svx%xw%dh%dn%s\n", TS_MUX_VERSION, d->bounds.w, d->bounds.h, d->name);
+	sprintf(msg, "Svx%xw%dh%dn%s", TS_MUX_VERSION, d->bounds.w, d->bounds.h, d->name);
 	write(r->socket, msg, strlen(msg)+1);
 	return 0;
 }
