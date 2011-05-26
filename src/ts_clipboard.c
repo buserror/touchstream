@@ -44,8 +44,8 @@ int
 ts_clipboard_add(
 		ts_clipboard_p clip,
 		char * flavor,
-		int size,
-		char * data )
+		uint8_t * data,
+		size_t size )
 {
 	int slot = -1;
 	for (int i = 0; i < clip->flavorCount; i++)

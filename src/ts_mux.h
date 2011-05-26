@@ -45,7 +45,9 @@
 #include "ts_master.h"
 #include "ts_signal.h"
 
-
+/*
+ * "macro" states for remote connections/sockets
+ */
 enum {
 	skt_state_None = 0,
 	skt_state_Listen,
@@ -57,7 +59,8 @@ struct ts_display_proxy_driver_t;
 /*
  * a ts_remote_t handles one connection for the mux. They can be
  * listen remotes, data (accepted) remotes, connect (outgoing)
- * remotes etc
+ * remotes, and even xorg ConnectionNumber etc
+ * Any filedescriptor will do
  */
 struct ts_mux_t;
 typedef struct ts_remote_t {

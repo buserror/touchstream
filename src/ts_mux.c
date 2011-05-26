@@ -800,7 +800,7 @@ data_process_packet(
 					ts_master_display_get(r->mux->master, name) :
 					ts_master_get_main(r->mux->master);
 			if (target)
-				ts_clipboard_add(&target->clipboard, flavor, strlen(data), data);
+				ts_clipboard_add(&target->clipboard, flavor, (uint8_t*)data, strlen(data));
 		}	break;
 		case 's': {	// set clipboard
 			V3("%s set clipboard\n", __func__);

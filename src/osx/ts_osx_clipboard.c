@@ -97,8 +97,8 @@ osx_driver_getclipboard_loop(
 
 				CFDataGetBytes(cfdata, CFRangeMake(0, length), data);
 				data[length] = 0;
-				printf ("%s DATA %d!! '%s'\n", __func__, (int)length, data);
-				ts_clipboard_add(&display->clipboard, "text", length, (char*)data);
+				V1 ("%s DATA %d!! '%s'\n", __func__, (int)length, data);
+				ts_clipboard_add(&display->clipboard, "text", data, length);
 
 				CFRelease(cfdata);
 			}

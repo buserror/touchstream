@@ -19,18 +19,23 @@
 	along with touchstream.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
+/*
+ * This small structure is made to store various "flavors" of clipboard
+ * data. Right now only strings are supported, but pretty much anything
+ * can be stored in there...
+ */
 #ifndef __TS_CLIPBOARD_H___
 #define __TS_CLIPBOARD_H___
 
+#include <sys/types.h>
 #include <stdint.h>
 
 typedef struct ts_clipboard_t {
 	int flavorCount;
 	struct {
 		char * name;
-		int size;
-		char * data;
+		size_t size;
+		uint8_t * data;
 	} flavor[8];
 } ts_clipboard_t, *ts_clipboard_p;
 
@@ -42,8 +47,8 @@ int
 ts_clipboard_add(
 		ts_clipboard_p clip,
 		char * flavor,
-		int size,
-		char * data );
+		uint8_t * data,
+		size_t size );
 
 
 #endif /* __TS_CLIPBOARD_H___ */

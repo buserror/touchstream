@@ -425,7 +425,7 @@ ts_xorg_client_driver_getclipboard_complete(
 
 		if (result == Success) {
 			V3 ("%s DATA %d!! '%s'\n", __func__, (int)bytes_left, data);
-			ts_clipboard_add(&display->clipboard, "text", bytes_left, (char*)data);
+			ts_clipboard_add(&display->clipboard, "text", data, bytes_left);
 		}
 		XFree (data);
 	}
