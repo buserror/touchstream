@@ -124,6 +124,12 @@ ts_display_place(
 	} else if (!strcmp(where, "top")) {
 		which->bounds.x = main->bounds.x;
 		which->bounds.y = main->bounds.y - which->bounds.h;
+	} else if (!strcmp(where, "left")) {
+		which->bounds.x = main->bounds.y - which->bounds.w;
+		which->bounds.y = main->bounds.y;
+	} else if (!strcmp(where, "bottom")) {
+		which->bounds.x = main->bounds.x;
+		which->bounds.y = main->bounds.y + main->bounds.h;
 	} else {
 		printf("%s unsupported place '%s'\n", __func__, where);
 	}
