@@ -35,6 +35,7 @@
 #include "ts_display.h"
 #include "ts_master.h"
 #include "ts_display_proxy.h"
+#include "ts_verbose.h"
 
 static PasteboardRef clip = 0;
 static ts_display_p loop_display;
@@ -60,7 +61,7 @@ osx_driver_getclipboard_loop(
 
 	PasteboardSynchronize(clip);
 	if ((err = PasteboardGetItemCount(clip, &nItems)) != noErr) {
-		printf("apple pasteboard GetItemCount failed\n");
+		V1("apple pasteboard GetItemCount failed\n");
 		return;
 	}
 
@@ -70,13 +71,13 @@ osx_driver_getclipboard_loop(
 		CFIndex flavorCount;
 
 		if ((err = PasteboardGetItemIdentifier(clip, i, &itemID)) != noErr) {
-			printf("can't get pasteboard item identifier\n");
+			V1("can't get pasteboard item identifier\n");
 			return;
 		}
 
 		if ((err = PasteboardCopyItemFlavors(clip, itemID,
 		        &flavorTypeArray)) != noErr) {
-			printf("Can't copy pasteboard item flavors\n");
+			V1("Can't copy pasteboard item flavors\n");
 			return;
 		}
 
@@ -89,7 +90,7 @@ osx_driver_getclipboard_loop(
 			if (UTTypeConformsTo(flavorType, CFSTR("public.utf8-plain-text"))) {
 				if ((err = PasteboardCopyItemFlavorData(clip, itemID,
 				        CFSTR("public.utf8-plain-text"), &cfdata)) != noErr) {
-					printf("apple pasteboard CopyItem failed\n");
+					V1("apple pasteboard CopyItem failed\n");
 					return;
 				}
 				CFIndex length = CFDataGetLength(cfdata);
@@ -124,15 +125,15 @@ osx_driver_setclipboard_loop(
 
 	for (int i = 0; i < clipboard->flavorCount; i++) {
 		if (!strcmp(clipboard->flavor[i].name, "text")) {
-			printf("%s adding %d bytes of %s\n", __func__,
-					clipboard->flavor[i].size, clipboard->flavor[i].name);
+			V1("%s adding %d bytes of %s\n", __func__,
+					(int)clipboard->flavor[i].size, clipboard->flavor[i].name);
 			if (PasteboardClear(clip) != noErr) {
-				printf("apple pasteboard clear failed");
+				V1("apple pasteboard clear failed");
 				return;
 			}
 			PasteboardSyncFlags flags = PasteboardSynchronize(clip);
 			if ((flags & kPasteboardModified) || !(flags & kPasteboardClientIsOwner)) {
-				printf("apple pasteboard cannot assert ownership");
+				V1("apple pasteboard cannot assert ownership");
 				return;
 			}
 			CFDataRef cfdata = CFDataCreate(kCFAllocatorDefault,
@@ -140,12 +141,12 @@ osx_driver_setclipboard_loop(
 					clipboard->flavor[i].size);
 
 			if (cfdata == nil) {
-				printf("apple pasteboard cfdatacreate failed");
+				V1("apple pasteboard cfdatacreate failed");
 				return;
 			}
 			if (PasteboardPutItemFlavor(clip, (PasteboardItemID) 1,
 			        CFSTR("public.utf8-plain-text"), cfdata, 0) != noErr) {
-				printf("apple pasteboard putitem failed");
+				V1("apple pasteboard putitem failed");
 				CFRelease(cfdata);
 			}
 			CFRelease(cfdata);
