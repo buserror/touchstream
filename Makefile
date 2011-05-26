@@ -74,4 +74,7 @@ ${OBJ}/touchstream.bin : ${SHARED_OBJ}
 
 
 install: all
+	if [ -f $(DESTDIR)/bin/touchstream ]; then \
+		mv $(DESTDIR)/bin/touchstream $(DESTDIR)/bin/touchstream.old ; \
+	fi
 	cp ${OBJ}/touchstream.bin $(DESTDIR)/bin/touchstream 
