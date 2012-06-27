@@ -1,0 +1,35 @@
+digraph dump { 
+	node [shape=rect]; compound=true; nodesep=.1; ranksep=2; rankdir=LR; concentrate=true
+;
+	
+	subgraph clusters_osx_server {
+		ts_osx_server;
+		ts_osx_keymap;
+		ts_osx_clipboard;
+	}
+	subgraph clusters_xorg_client {
+		ts_xorg_client;
+		ts_xorg_keymap;
+	}
+	subgraph clusters_display {
+		ts_display;
+		ts_clipboard;
+	}
+	ts_master -> ts_display; 
+	ts_display -> ts_xorg_client;
+	ts_display -> ts_display_proxy;
+	ts_display -> ts_mux_driver_remote;
+	ts_display -> ts_osx_server;
+	
+	ts_mux -> ts_remote;
+	
+	ts_remote -> ts_remote_listen ;
+	ts_remote -> ts_remote_data ;
+	ts_remote -> ts_remote_connect ;
+	ts_remote_connect -> ts_remote_data;
+	ts_remote_listen -> ts_remote_data;
+	
+	ts_remote -> ts_xorg_client;
+	ts_remote -> ts_display_proxy;
+
+}
