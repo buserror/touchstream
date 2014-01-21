@@ -79,6 +79,7 @@ updateScrollSpeed(
 		CFRelease(pref);
 	}
 	d->scrollSpeedFactor = pow(10.0, d->scrollSpeed);
+	V3("%s scroll speed %f factor %f\n", __func__, (float)d->scrollSpeed, (float)d->scrollSpeedFactor);
 }
 
 static SInt32
@@ -89,7 +90,7 @@ mapScrollWheelToSynergy(
 	// return accelerated scrolling but not exponentially scaled as it is
 	// on the mac.
 	double w = (1.0 + d->scrollSpeed) * x / d->scrollSpeedFactor;
-	return (SInt32)(32.0 * w);
+	return (SInt32)(16.0 * w);
 }
 
 static void
@@ -287,12 +288,13 @@ handleCGInputEvent(
 			return event;
 		}	break;
 		case kCGEventScrollWheel: {
-			int y = CGEventGetIntegerValueField(event, kCGScrollWheelEventDeltaAxis2);
-			int x = CGEventGetIntegerValueField(event, kCGScrollWheelEventDeltaAxis1);
-			y = mapScrollWheelToSynergy(d, y);
-			x = mapScrollWheelToSynergy(d, x);
-		//	printf("wheel %3d %3d\n", y, x);
-			ts_display_wheel(
+			float sy = CGEventGetDoubleValueField(event, kCGScrollWheelEventDeltaAxis2);
+			float sx = CGEventGetDoubleValueField(event, kCGScrollWheelEventDeltaAxis1);
+			int y = mapScrollWheelToSynergy(d, sy);
+			int x = mapScrollWheelToSynergy(d, sx);
+			V3("wheel %f %f -> %3d %3d\n", sy, sx, y, x);
+			if (x || y)
+				ts_display_wheel(
 					ts_master_get_active(d->display.master),
 					0, y, x);
 		}	break;
@@ -318,7 +320,7 @@ handleCGInputEvent(
 		case NX_NUMPROCS:
 			break;
 		default:
-			V1("Unknown Quartz Event type: 0x%02x\n", type);
+			V3("Unknown Quartz Event type: 0x%02x\n", type);
 	}
 	return d->display.active ? event : NULL;
 }
