@@ -56,7 +56,7 @@
 
 #define TS_MUX_VERSION 0x0001
 
-DEFINE_FIFO(ts_display_proxy_event_t, proxy_fifo, 32);
+DEFINE_FIFO(ts_display_proxy_event_t, proxy_fifo);
 
 #define _MAX(a, b) ((a) > (b) ? (a) : (b))
 

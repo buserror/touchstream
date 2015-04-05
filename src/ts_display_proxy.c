@@ -27,7 +27,7 @@
 #include "ts_display_proxy.h"
 #include "ts_mux.h"
 
-DEFINE_FIFO(ts_display_proxy_event_t, proxy_fifo, 32);
+DEFINE_FIFO(ts_display_proxy_event_t, proxy_fifo);
 
 static int
 ts_proxy_driver_flush(
