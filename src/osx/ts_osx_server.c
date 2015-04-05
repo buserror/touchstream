@@ -23,7 +23,6 @@
 #include "ts_defines.h"
 
 #include <Carbon/Carbon.h>
-#include <HIToolbox/CarbonEvents.h>
 #include <mach/mach_port.h>
 #include <mach/mach_interface.h>
 #include <mach/mach_init.h>
