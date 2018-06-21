@@ -69,7 +69,8 @@ ts_signal(
 		uint8_t what )
 {
 	if (!what) what++;
-	write(s->fd[end], &what, 1);
+	if (write(s->fd[end], &what, 1))
+		;
 }
 
 void

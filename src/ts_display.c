@@ -98,7 +98,7 @@ ts_display_leave(
 	if (!d)
 		return;
 	V3("Leaving display %s at %5d %5d\n", d->name, d->mousex, d->mousey, __func__);
-	if (d && d->driver && d->driver->leave)
+	if (d->driver && d->driver->leave)
 		d->driver->leave(d);
 	d->active = 0;
 }

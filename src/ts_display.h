@@ -58,7 +58,7 @@ struct ts_display_t;
 struct ts_master_t;
 
 typedef struct ts_display_driver_t {
-	int _mutable : 1;	// can be free()ed ?
+	unsigned int _mutable : 1;	// can be free()ed ?
 	void * refCon;	// reference constant, optional, used by callbacks
 	void (*init)(struct ts_display_t *d);
 	void (*dispose)(struct ts_display_t *d);
@@ -84,7 +84,7 @@ typedef struct ts_display_t {
 	ts_display_driver_p	driver;
 
 	ts_rect_t bounds;
-	int active : 1, moved : 1;
+	unsigned int active : 1, moved : 1;
 
 	int mousex, mousey;
 

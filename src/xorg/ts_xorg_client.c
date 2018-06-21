@@ -222,8 +222,8 @@ ts_xorg_client_driver_init(
 
 	d->root = DefaultRootWindow(d->dp);
 	// Ignore any error here, this is "just in case"
-    //int i = 1;
-    //setsockopt (ConnectionNumber(d->dp), IPPROTO_TCP, TCP_NODELAY, &i, sizeof (i));
+	//int i = 1;
+	//setsockopt (ConnectionNumber(d->dp), IPPROTO_TCP, TCP_NODELAY, &i, sizeof (i));
 
 	V2("%s display %s : %p (%s)\n", __func__, d->displayname, d->dp, d->display.param);
 
@@ -294,9 +294,9 @@ ts_xorg_client_driver_mouse(
 		int dx, int dy)
 {
 	ts_xorg_client_p d = (ts_xorg_client_p)display;
-    XTestFakeMotionEvent(
-    		d->dp, 0,
-    		display->mousex, display->mousey, CurrentTime);
+	XTestFakeMotionEvent(
+			d->dp, 0,
+			display->mousex, display->mousey, CurrentTime);
 	XFlush(d->dp);
 }
 
@@ -548,15 +548,15 @@ ts_xorg_client_create(
 	char * col = strchr(name, ':');
 	if (col) *col = 0;
 
-    struct hostent *hp = gethostbyname(name);
-    if (!hp) {
-    	fprintf(stderr, "%s host '%s' doesn't exists\n", __func__, name);
-    	return NULL;
-    }
-    char displayname[128];
-    sprintf(displayname, "%s:%s",
-    		inet_ntoa(*(struct in_addr *) (hp->h_addr_list[0])),
-    		col ? col+1 : "0.0");
+	struct hostent *hp = gethostbyname(name);
+	if (!hp) {
+		fprintf(stderr, "%s host '%s' doesn't exists\n", __func__, name);
+		return NULL;
+	}
+	char displayname[128];
+	sprintf(displayname, "%s:%s",
+			inet_ntoa(*(struct in_addr *) (hp->h_addr_list[0])),
+			col ? col+1 : "0.0");
 	res->displayname = strdup(displayname);
 
 	if (!isdigit(name[0])) {
@@ -584,9 +584,9 @@ ts_xorg_client_create(
 extern ts_platform_create_callback_p ts_platform_create_client;
 extern ts_platform_create_callback_p ts_xorg_create_client;
 
-static void __xorg_init() __attribute__((constructor));
+static void __xorg_init(void) __attribute__((constructor));
 
-static void __xorg_init()
+static void __xorg_init(void)
 {
 //	printf("%s\n",__func__);
 	ts_platform_create_client = ts_xorg_client_main_create;

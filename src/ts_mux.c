@@ -92,7 +92,7 @@ _sn_mux_thread(
 		 * to make sure socket is ready to send before sending out
 		 */
 		for (int i = 0; i < 32; i++) {
-			if ((mux->dp_usage & (1 << i))) {
+			if ((mux->dp_usage & (1U << i))) {
 				ts_remote_p fun = mux->dp[i];
 				if (fun->socket <= 0 && fun->start(fun))
 					continue;
@@ -113,7 +113,8 @@ _sn_mux_thread(
 		 * Wait for an event on any of the sockets
 		 */
 		struct timeval timo = { .tv_sec = 1, .tv_usec = 0 };
-		/*int ret = */ select(max + 1, &readSet, &writeSet, NULL, &timo);
+		/*int ret = */
+		select(max + 1, &readSet, &writeSet, NULL, &timo);
 
 		// have we been signaled ?
 		if (FD_ISSET(mux->signal.fd[TS_SIGNAL_END1], &readSet)) {
@@ -122,7 +123,7 @@ _sn_mux_thread(
 		//	printf("%s: signaled\n", __FUNCTION__);
 		}
 		for (int i = 0; i < 32; i++)
-			if ((mux->dp_usage & (1 << i))) {
+			if ((mux->dp_usage & (1U << i))) {
 				ts_remote_p fun = mux->dp[i];
 				if (fun->socket <= 0) /* not yet connected anyway */
 					continue;
@@ -182,7 +183,7 @@ ts_mux_register(
 		ts_remote_p r)
 {
 	for (int i = 0; i < 32; i++)
-		if (!(r->mux->dp_usage & (1 << i))) {
+		if (!(r->mux->dp_usage & (1U << i))) {
 			r->mux->dp[i] = r;
 			r->mux->dp_usage |= 1 << i;
 			ts_mux_signal(r->mux, 0);
@@ -196,7 +197,7 @@ ts_mux_unregister(
 		ts_remote_p r)
 {
 	for (int i = 0; i < 32; i++)
-		if ((r->mux->dp_usage & (1 << i)) && r->mux->dp[i] == r) {
+		if ((r->mux->dp_usage & (1U << i)) && r->mux->dp[i] == r) {
 			r->mux->dp_usage &= ~(1 << i);
 			r->mux->dp[i] = NULL;
 //			ts_mux_signal(r->mux, 0);
@@ -221,25 +222,25 @@ connect_start(
 	size_t addrLen = sizeof(r->addr);
 
 	r->state = skt_state_Connect;
-    int i = 1;
-    // we can ignore error here, on UNIX sockets
-    setsockopt (skt, IPPROTO_TCP, TCP_NODELAY, &i, sizeof (i));
+	int i = 1;
+	// we can ignore error here, on UNIX sockets
+	setsockopt (skt, IPPROTO_TCP, TCP_NODELAY, &i, sizeof (i));
 
-    r->timeout = 0;
+	r->timeout = 0;
 	r->socket = skt;
 	{	// make it nonblocking
 		int flags = fcntl(r->socket, F_GETFL, 0);
 		fcntl(r->socket, F_SETFL, flags | O_NONBLOCK);
 	}
 
-    if (connect(skt, (struct sockaddr*)&r->addr, addrLen) < 0) {
-    	if (errno != EINPROGRESS) {
+	if (connect(skt, (struct sockaddr*)&r->addr, addrLen) < 0) {
+		if (errno != EINPROGRESS) {
 			perror("connect_start");
 			close(skt);
 			return -1;
-    	}
-    	V1("Connection in progress (%s)\n", __func__);
-    }
+		}
+		V1("Connection in progress (%s)\n", __func__);
+	}
 
 	return 0;
 }
@@ -280,7 +281,8 @@ connect_established(
 	sprintf(msg, "Cvx%xw%dh%dn%s:p%s:", TS_MUX_VERSION,
 			d->bounds.w, d->bounds.h, d->name,
 			d->param ? d->param : "");
-	write(r->socket, msg, strlen(msg)+1);
+	if (write(r->socket, msg, strlen(msg)+1))
+		;
 	return 0;
 }
 
@@ -336,7 +338,8 @@ data_start(
 	ts_display_p d = ts_master_get_main(r->mux->master);
 	char msg[32];
 	sprintf(msg, "Svx%xw%dh%dn%s", TS_MUX_VERSION, d->bounds.w, d->bounds.h, d->name);
-	write(r->socket, msg, strlen(msg)+1);
+	if (write(r->socket, msg, strlen(msg)+1))
+		;
 	return 0;
 }
 
@@ -548,10 +551,10 @@ data_event_write(
 	 * if all is well transform into a normal "data" one...
 	 */
 	if (r->state == skt_state_Connect) {
-	    int e = 1;
-	    socklen_t s = sizeof(e);
-	    // we can ignore error here, on UNIX sockets
-	    getsockopt (r->socket, SOL_SOCKET, SO_ERROR, &e, &s);
+		int e = 1;
+		socklen_t s = sizeof(e);
+		// we can ignore error here, on UNIX sockets
+		getsockopt (r->socket, SOL_SOCKET, SO_ERROR, &e, &s);
 	//	printf("data_event_write connection finished error %d\n", e );
 		if (e) {
 			errno = e;
@@ -597,19 +600,24 @@ data_event_write(
 				break;
 			case ts_proxy_mouse:
 				buf = data_event_write_alloc(r, 32);
-				sprintf((char*)buf, "mx%dy%d", e.u.mouse.x,  e.u.mouse.y);
+				sprintf((char*)buf, "mx%dy%d",
+					(int)e.u.mouse.x,  (int)e.u.mouse.y);
 				break;
 			case ts_proxy_button:
 				buf = data_event_write_alloc(r, 16);
-				sprintf((char*)buf, "bb%dd%d", e.u.button, e.down);
+				sprintf((char*)buf, "bb%dd%d",
+					(int)e.u.button, (int)e.down);
 				break;
 			case ts_proxy_key:
 				buf = data_event_write_alloc(r, 16);
-				sprintf((char*)buf, "kd%dkx%04x", e.down, e.u.key);
+				sprintf((char*)buf, "kd%dkx%04x",
+					(int)e.down, e.u.key);
 				break;
 			case ts_proxy_wheel:
 				buf = data_event_write_alloc(r, 16);
-				sprintf((char*)buf, "wb%dx%dy%d", e.u.wheel.wheel, e.u.wheel.x, e.u.wheel.y);
+				sprintf((char*)buf, "wb%dx%dy%d",
+					(int)e.u.wheel.wheel,
+					(int)e.u.wheel.x,(int) e.u.wheel.y);
 				break;
 			case ts_proxy_getclipboard:
 				buf = data_event_write_alloc(r, 8);
@@ -628,7 +636,7 @@ data_event_write(
 	 * we must have generated packets there, so try to send them now too, instead
 	 * of waiting for another select() event.
 	 */
-	 data_event_write_flush(r);
+	data_event_write_flush(r);
 	return 0;
 }
 
@@ -873,17 +881,15 @@ data_event_read(
 				// got a packet
 			//	printf("%s found a packet %d size (%d in in)\n", __func__, packet_len, r->in_len);
 
-				if (packet_len) {
-					r->in[packet_len] = 0;
-					if (packet_len > 0)
-						data_process_packet(r, r->in, packet_len);
-					/*
-					 * eat up any remaining line terminations etc
-					 */
+				r->in[packet_len] = 0;
+				if (packet_len > 0)
+					data_process_packet(r, r->in, packet_len);
+				/*
+				 * eat up any remaining line terminations etc
+				 */
+				packet_len++;
+				while (packet_len < r->in_len && r->in[packet_len] < ' ')
 					packet_len++;
-					while (packet_len < r->in_len && r->in[packet_len] < ' ')
-						packet_len++;
-				}
 				/* move remaining bytes */
 				if (r->in_len > packet_len)
 					memmove(r->in,
@@ -918,12 +924,12 @@ listen_start(
 		close(skt);
 		return -1;
 	}
-    if (listen(skt, 10) < 0) {
-    	perror("listen_start listen");
-    	close(skt);
-    	return -1;
-    }
-    r->state = skt_state_Listen;
+	if (listen(skt, 10) < 0) {
+		perror("listen_start listen");
+		close(skt);
+		return -1;
+	}
+	r->state = skt_state_Listen;
 	r->socket = skt;
 
 	{	// make it nonblocking
@@ -960,10 +966,10 @@ listen_event_read(
 	if (fd <= 0) {
 		perror("_vdmsg_funnel_event_listen accept");
 		exit(1);
-		return -1;
+//		return -1;
 	}
-    int i = 1;
-    setsockopt (fd, IPPROTO_TCP, TCP_NODELAY, &i, sizeof (i));
+	int i = 1;
+	setsockopt (fd, IPPROTO_TCP, TCP_NODELAY, &i, sizeof (i));
 
 	ts_remote_p res = malloc(sizeof(ts_remote_t));
 	memset(res, 0, sizeof(*res));
@@ -1007,11 +1013,11 @@ ts_mux_port_new(
 			*port = 0; port++;
 			res->addr.sin_port = htons(atoi(port));
 		}
-	    struct hostent *hp = gethostbyname(address);
-	    if (!hp) {
-	    	fprintf(stderr, "%s unknown host '%s'\n", __func__, address);
-	    	exit(1);
-	    }
+		struct hostent *hp = gethostbyname(address);
+		if (!hp) {
+			fprintf(stderr, "%s unknown host '%s'\n", __func__, address);
+			exit(1);
+		}
 		res->addr.sin_addr.s_addr = *(in_addr_t *) (hp->h_addr_list[0]);
 
 		res->start = connect_start;

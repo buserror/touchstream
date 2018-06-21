@@ -126,7 +126,8 @@ main(
 		//daemon(0, 0);
 		if (fork())
 			exit(0);
-		chdir("/tmp");
+		if (chdir("/tmp"))
+			;
 		close(0);close(1);close(2);
 		if (verbose) {
 			int fd = open("/tmp/touchstream.log", O_WRONLY|O_CREAT, 0644);
@@ -140,7 +141,8 @@ main(
 				sprintf(envv, "XAUTHORITY=%s", xa);
 				putenv(envv);
 			}
-			system("pwd;env");
+			if (system("pwd;env"))
+				;
 		}
 	}
 
