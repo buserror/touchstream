@@ -29,10 +29,7 @@ IPATH 		+= src
 SHARED_SRC	= ${wildcard src/*.c}
 
 ifeq ($(MARCH),apple)
-#
-# Apple specific flags
-# -m32 is needed because of the bits of Carbon we need
-CC = clang -m32
+CC = clang
 
 # This requires X11.app installed
 SHARED_SRC	+= ${wildcard src/xorg/*.c}
