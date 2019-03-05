@@ -50,3 +50,56 @@ Clearly it lacks some of the features synergy has (windows support,
 non-latin keyboard support etc) but it also a LOT simpler, and uses 
 a fraction of the resources.
 
+## Requirements
+
+In order to build touchstream for your platform you will need X11 headers and a basic C toolchain.
+
+### Mac OS X
+For OS X 10.14 you need:
+* XQuartz 
+* Xcode command line tools
+
+### Linux
+* Compiles on ubuntu 16.04 with the following packages installed:
+ * gcc (build-essential)
+ * libx11-dev
+ * x11proto-core-dev
+ * libxtst-dev
+ * libxext-dev
+ 
+### Building
+
+With the prerequisites installed you should be able to simply run  `make`. 
+
+
+## Usage
+
+Running `touchstream.bin`
+
+### Common command arguments
+
+>   `-v` verbose output (repeat for more verbose)
+>   `-D` daemonize
+
+### Server
+
+> `-s` run touchstream server
+
+```bash
+# specify -s followed by a resolvable name for the server.
+# Use the same name when firing up the client (see below)
+touchstream.bin -s server-name.local
+```
+
+### Client
+
+> `-c` run couchstream client
+
+```bash
+# Specify the server name and direction like this
+# -c server-name=[left|right|top|bottom]
+# screen to attach to this client.  E.g. if Client is left of
+# server then specify "left" after the equal:
+
+touchstream.bin -c server-name.local=left
+```

@@ -249,7 +249,11 @@ handleCGInputEvent(
 			UInt32 modifiers;
 			MouseTrackingResult res;
 			Point pt;
-			TrackMouseLocationWithOptions(NULL, 0, 0, &pt, &modifiers, &res);
+			CGEventRef event = CGEventCreate(NULL);
+			CGPoint mouse = CGEventGetLocation(event);
+			pt.h = (short)mouse.x;
+			pt.v = (short)mouse.y;
+			CFRelease(event);
 		}	break;
 		case kCGEventLeftMouseUp:
 		case kCGEventRightMouseUp:
